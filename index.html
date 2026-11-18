@@ -119,7 +119,7 @@ table.tot tr.sum td{border-top:2px solid var(--navy);border-bottom:0;font-weight
 </head>
 <body>
 
-<div class="preview-bar"><div class="in"><span><b>Preview for review</b> with made-up people. Nothing is saved or sent.</span><label>Sample <select id="who"><option value="jordan">Jordan (steady pay)</option><option value="sam">Sam (16, hourly)</option></select></label></div></div>
+<div class="preview-bar"><div class="in"><span><b>Preview for review</b> with made-up people. Nothing is saved or sent.</span><label>Sample <select id="who"><option value="jordan">Jordan (steady pay)</option><option value="sam">Sam (hourly)</option></select></label></div></div>
 <div id="app"></div>
 
 <script>
@@ -131,9 +131,9 @@ const PEOPLE = {
     preset:{'2026-11-26':{leave:{code:'HOL',hours:6}, note:'Thanksgiving'}},
     tasks:[],
     bal:{VAC:24, PER:3, SICK:20} },
-  sam:{ name:'Sam Ortiz', first:'Sam', role:'Facilities helper', pay:'hourly', minor:true, waiver:false,
+  sam:{ name:'Sam Ortiz', first:'Sam', role:'Facilities helper', pay:'hourly', minor:false, waiver:false,
     start:'2026-11-11', end:'2026-11-25', due:'Wednesday, Nov 26',
-    usual:{3:['15:30','17:30'],6:['09:00','13:00']}, schoolDays:[1,2,3,4,5],
+    usual:{3:['15:30','17:30'],6:['09:00','13:00']},
     preset:{}, tasks:[], bal:{SICK:12} }
 };
 const CODES = [
@@ -224,12 +224,6 @@ function dayCalc(day, tc){
   const ot=Math.max(0,worked-480);
   if(ot>0) flags.push(['','Overtime: '+fmtH(ot)+' over 8 hours.']);
   if(segs.some(s=>s[1]>1440)) flags.push(['','Check your times: this ends after midnight.']);
-  if(p.minor){
-    if(day.school && worked>240) flags.push(['bad','Age limit: over 4 hours on a school day.']);
-    if(!day.school && worked>480) flags.push(['bad','Age limit: over 8 hours in a day.']);
-    const times=segs.map(s=>[s[0],s[1]]).concat(tasks.list.map(t=>[t.a,t.b]));
-    if(times.some(([a,b])=>a<300 || b>1320)) flags.push(['bad','Age limit: work before 5 a.m. or after 10 p.m.']);
-  }
   if(day.work && day.leave) {} // part day off is fine
   return {worked, flags, premium, ot, segs, changed: isChanged(day)};
 }
@@ -350,7 +344,6 @@ function renderEditor(d,i){
       <div class="row2"><label class="f">Hours off<input type="number" min="0" max="12" step="0.25" inputmode="decimal" data-lh value="${d.leave.hours}"></label><div></div></div>
       ${d.work?'<button class="link" data-act="dropleave">Remove time off</button>':''}`;
   }
-  if(S.p.minor) h+=`<label class="switch"><span><b>School day</b><br><span class="hint" style="margin:0">Untick for holidays and days off school.</span></span><input type="checkbox" data-school ${d.school?'checked':''}></label>`;
   h+=`<div class="btns"><button class="link" data-act="reset">Back to my usual</button><button class="btn" data-act="close">Done</button></div></div>`;
   return h;
 }
