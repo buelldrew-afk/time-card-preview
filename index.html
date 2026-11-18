@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>CCC Web Time Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light;
+  --navy:#202D50; --slate:#436A8B; --tint:#D9E1E8; --mist:#ECF0F3; --white:#fff;
+  --ink:#1d2433; --muted:#5d6b7c; --line:#d3dbe3;
+  --flag-bg:#FFF6DB; --flag-line:#E3B341; --flag-ink:#6b4e00;
+  --bad-bg:#FDECEC; --bad-line:#D9534F; --bad-ink:#8a1f1c;
+  --ok:#2F7D5B; --ok-bg:#E6F4EC;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+img{max-width:100%}
+body{background:var(--mist);color:var(--ink);font-family:"Nunito Sans",Avenir,"Segoe UI",Arial,sans-serif;font-size:16px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:600px;margin:0 auto;padding-block:0 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* staff header */
+header.brand{background:var(--navy);color:#fff}
+header.brand .in{max-width:600px;margin:0 auto;padding-block:18px 22px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wordmark{font-weight:800;letter-spacing:.18em;font-size:14px;line-height:1.15;text-align:left}
+.wordmark small{display:block;font-weight:600;letter-spacing:.3em;font-size:10px;opacity:.85;margin-top:2px}
+.hello{font-size:26px;font-weight:800;margin:18px 0 2px}
+.sub{opacity:.9}
+.chip{display:inline-block;border-radius:99px;padding:3px 10px;font-size:13px;font-weight:700;background:rgba(255,255,255,.16);margin-top:10px}
+.chip.sent{background:var(--ok-bg);color:var(--ok)}
+
+.card{background:#fff;border-radius:var(--radius);box-shadow:0 1px 2px rgba(32,45,80,.08);margin-top:16px;overflow:hidden}
+.card h2{font-size:18px;margin:0;padding:16px 16px 4px;color:var(--navy)}
+.card .lead{padding:0 16px 12px;color:var(--muted);font-size:15px;margin:0}
+.banner{background:var(--tint);color:var(--navy);border-radius:var(--radius);padding:12px 14px;margin-top:16px;font-size:15px}
+
+.week{padding:8px 16px 4px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);background:var(--mist);border-top:1px solid var(--line)}
+.day{border-top:1px solid var(--line)}
+.dayrow{display:flex;align-items:center;gap:12px;width:100%;padding:12px 16px;background:none;border:0;text-align:left;cursor:pointer;min-height:60px}
+.dayrow:hover{background:#f7f9fb}
+.date{width:52px;flex:none;text-align:center}
+.date .dow{font-weight:800;color:var(--navy)}
+.date .dn{font-size:13px;color:var(--muted)}
+.what{flex:1;min-width:0}
+.what .main{font-weight:700}
+.what .meta{font-size:14px;color:var(--muted)}
+.day.off .what .main{font-weight:400;color:var(--muted)}
+.tag{display:inline-block;font-size:12px;font-weight:800;border-radius:6px;padding:1px 7px;margin-left:6px;vertical-align:1px}
+.tag.leave{background:var(--tint);color:var(--navy)}
+.tag.chg{background:#eef2f6;color:var(--muted)}
+.edit{flex:none;color:var(--slate);font-weight:700;font-size:14px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--flag-line);flex:none}
+
+.flags{padding:0 16px 12px 80px;display:grid;gap:6px}
+.flag{background:var(--flag-bg);border-left:4px solid var(--flag-line);color:var(--flag-ink);border-radius:8px;padding:6px 10px;font-size:14px}
+.flag.bad{background:var(--bad-bg);border-color:var(--bad-line);color:var(--bad-ink)}
+
+.editor{background:#f7f9fb;border-top:1px dashed var(--line);padding:14px 16px 16px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);background:var(--tint);border-radius:12px;padding:4px;gap:4px}
+.seg button{border:0;background:none;border-radius:9px;padding:10px 4px;font-weight:700;color:var(--navy);cursor:pointer}
+.seg button.on{background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+label.f{display:block;font-size:13px;font-weight:700;color:var(--muted)}
+label.f input,label.f select,label.f textarea{display:block;width:100%;margin-top:4px;border:1px solid var(--line);border-radius:10px;padding:11px 10px;background:#fff;font-size:16px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid #9fb7cc;outline-offset:1px}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:10px;cursor:pointer}
+.switch input{width:22px;height:22px;accent-color:var(--slate)}
+.link{background:none;border:0;color:var(--slate);font-weight:700;padding:8px 0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.codes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.code{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px;text-align:left;cursor:pointer}
+.code b{display:block;color:var(--navy)}
+.code span{font-size:12.5px;color:var(--muted)}
+.code.on{border:2px solid var(--slate);background:#f1f6fa;padding:9px}
+.hint{font-size:13.5px;color:var(--muted);margin-top:8px}
+.extra{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-top:8px}
+.x{border:1px solid var(--line);background:#fff;border-radius:10px;height:46px;width:46px;cursor:pointer;font-size:20px;color:var(--muted)}
+.btns{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap}
+.btn{border:0;border-radius:12px;padding:12px 18px;font-weight:800;cursor:pointer;background:var(--slate);color:#fff}
+.btn.ghost{background:#fff;color:var(--slate);border:1px solid var(--line)}
+.btn.big{width:100%;padding:16px;font-size:18px;background:var(--navy)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+.task{display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border-top:1px solid var(--line)}
+.task .what .main{font-weight:700}
+.pill{display:inline-block;background:var(--tint);color:var(--navy);border-radius:99px;padding:1px 8px;font-size:12.5px;font-weight:800}
+.addbox{padding:14px 16px 16px;border-top:1px solid var(--line);background:#f7f9fb}
+.preview{margin-top:10px;font-weight:700;color:var(--navy)}
+.cardpad{padding:4px 16px 16px}
+
+table.tot{width:100%;border-collapse:collapse;font-size:15px}
+table.tot td{padding:8px 0;border-bottom:1px solid var(--mist)}
+table.tot td:last-child{text-align:right;font-weight:700;white-space:nowrap}
+table.tot tr.sum td{border-top:2px solid var(--navy);border-bottom:0;font-weight:800;color:var(--navy);font-size:17px}
+.paybox{background:var(--mist);border-radius:12px;padding:12px;margin-top:12px;font-size:15px}
+.bal{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.bal div{flex:1;min-width:130px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}
+.bal b{display:block;font-size:20px;color:var(--navy)}
+.bal span{font-size:13px;color:var(--muted)}
+.confirm{display:flex;gap:12px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:12px;margin:12px 0;cursor:pointer}
+.confirm input{width:24px;height:24px;accent-color:var(--navy);flex:none;margin-top:1px}
+
+.done{text-align:center;padding:28px 16px 20px}
+.check{width:72px;height:72px;border-radius:50%;background:var(--ok-bg);color:var(--ok);display:grid;place-items:center;font-size:40px;margin:0 auto 10px}
+.done h2{padding:0;font-size:24px}
+
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.25);max-width:90vw}
+.preview-bar{background:#FFE9A8;color:#5a4300;font-size:13.5px}
+.preview-bar .in{max-width:600px;margin:0 auto;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:space-between}
+.preview-bar select{font:inherit;font-weight:700;color:#5a4300;background:#fff7d6;border:1px solid #d9b94a;border-radius:8px;padding:3px 6px}
+.mailto{font-weight:700;user-select:all}
+.copybox{width:100%;min-height:120px;margin-top:8px;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:8px}
+@media (max-width:420px){.flags{padding-left:16px}.codes{grid-template-columns:1fr}.hello{font-size:23px}}
+</style>
+</head>
+<body>
+
+<div class="preview-bar"><div class="in"><span><b>Preview for review</b> with made-up people. Nothing is saved or sent.</span><label>Sample <select id="who"><option value="jordan">Jordan (steady pay)</option><option value="sam">Sam (16, hourly)</option></select></label></div></div>
+<div id="app"></div>
+
+<script>
+/* ---------- made-up sample people ---------- */
+const PEOPLE = {
+  jordan:{ name:'Jordan Rivera', first:'Jordan', role:'Office assistant', pay:'steady', schedPerPeriod:34.67, weekly:16,
+    waiver:true, minor:false, start:'2026-11-16', end:'2026-11-30', due:'Tuesday, Dec 1',
+    usual:{2:['09:00','15:00'],4:['09:00','15:00'],5:['09:00','13:00']},
+    preset:{'2026-11-26':{leave:{code:'HOL',hours:6}, note:'Thanksgiving'}},
+    tasks:[],
+    bal:{VAC:24, PER:3, SICK:20} },
+  sam:{ name:'Sam Ortiz', first:'Sam', role:'Facilities helper', pay:'hourly', minor:true, waiver:false,
+    start:'2026-11-11', end:'2026-11-25', due:'Wednesday, Nov 26',
+    usual:{3:['15:30','17:30'],6:['09:00','13:00']}, schoolDays:[1,2,3,4,5],
+    preset:{}, tasks:[], bal:{SICK:12} }
+};
+const CODES = [
+  ['HOL','Holiday','A church holiday'],
+  ['VAC','Vacation','Uses your time-off hours'],
+  ['PER','Personal day','Uses one of your 4 days'],
+  ['SICK','Sick','You or family member ill'],
+  ['CXL','Church cancelled','Closed or called off; paid, uses nothing'],
+  ['UNP','Unpaid','Time off without pay']
+];
+const CODE_NAME = Object.fromEntries(CODES.map(c=>[c[0],c[1]]));
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const toMin = t => { if(!t) return null; const [h,m]=t.split(':').map(Number); return h*60+m; };
+function fmtT(t){ if(t==null||t==='') return '–'; let m = typeof t==='number'? ((t%1440)+1440)%1440 : toMin(t);
+  let h=Math.floor(m/60), mm=m%60, ap=h>=12?'pm':'am'; h=h%12||12; return h+(mm?':'+String(mm).padStart(2,'0'):'')+' '+ap; }
+function fmtH(min){ min=Math.round(min); if(!min) return '0 hrs'; const h=Math.floor(min/60), m=min%60;
+  return (h? h+(h===1?' hr':' hrs'):'') + (h&&m?' ':'') + (m? m+' min':''); }
+const dec = min => (Math.round(min/60*100)/100).toFixed(2);
+const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const dObj = iso => { const [y,m,d]=iso.split('-').map(Number); return new Date(y,m-1,d); };
+const iso = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const nice = isoD => { const d=dObj(isoD); return DOW[d.getDay()]+' '+MON[d.getMonth()]+' '+d.getDate(); };
+function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),3200); }
+
+/* ---------- state ---------- */
+let S;
+function usualFor(p,dateIso){ const u=p.usual[dObj(dateIso).getDay()]; return u? {start:u[0],end:u[1],lunch:null,extra:[]} : null; }
+function usualMin(p,dateIso){ const u=p.usual[dObj(dateIso).getDay()]; return u? toMin(u[1])-toMin(u[0]) : 0; }
+function init(key){
+  const p=PEOPLE[key]; const days=[];
+  for(let d=dObj(p.start); d<=dObj(p.end); d.setDate(d.getDate()+1)){
+    const k=iso(d), pre=p.preset[k];
+    days.push({ date:k, work: pre? null : usualFor(p,k), leave: pre&&pre.leave? {...pre.leave} : null,
+      note: pre? pre.note:'', school: p.minor ? (p.schoolDays||[]).includes(d.getDay()) : false });
+  }
+  S = { key, p, days, tasks:p.tasks.map(t=>({...t})), open:null, adding:false, draft:{date:p.start,s:'',e:'',what:''},
+        confirm:false, sent:null, msg:'', correction:false, view:S?S.view:'staff', drewTab:'email' };
+}
+
+/* ---------- rules ---------- */
+function segments(day){
+  const w=day.work; if(!w||!w.start||!w.end) return [];
+  let s=toMin(w.start), e=toMin(w.end); if(e<=s) e+=1440;
+  const out=[];
+  if(w.lunch && w.lunch.s && w.lunch.e){
+    let ls=toMin(w.lunch.s), le=toMin(w.lunch.e); if(ls<s) ls+=1440; if(le<ls) le+=1440;
+    ls=Math.min(Math.max(ls,s),e); le=Math.min(Math.max(le,ls),e);
+    out.push([s,ls,'main']); out.push([le,e,'main']);
+  } else out.push([s,e,'main']);
+  (w.extra||[]).forEach(x=>{ if(!x.s||!x.e) return; let a=toMin(x.s), b=toMin(x.e); if(b<=a) b+=1440; out.push([a,b,'extra']); });
+  return out.filter(x=>x[1]>x[0]).sort((a,b)=>a[0]-b[0]);
+}
+/* short tasks paid in 15-minute blocks; tasks that start inside an earlier block share it */
+function taskCalc(){
+  const by={}; S.tasks.forEach((t,i)=>{ (by[t.date]=by[t.date]||[]).push({...t,i}); });
+  const info={}; let actual=0, paid=0; const perDate={};
+  Object.keys(by).forEach(date=>{
+    const list=by[date].map(t=>{let a=toMin(t.s), b=toMin(t.e); if(b<a) b+=1440; return {...t,a,b};}).sort((x,y)=>x.a-y.a);
+    let cur=null; perDate[date]={actual:0,list};
+    list.forEach(t=>{
+      const act=t.b-t.a; actual+=act; perDate[date].actual+=act;
+      if(cur && t.a < cur.end){ cur.maxEnd=Math.max(cur.maxEnd,t.b); const old=cur.end-cur.start;
+        cur.end=cur.start+Math.max(15,Math.ceil((cur.maxEnd-cur.start)/15)*15); paid+=(cur.end-cur.start)-old;
+        info[t.i]={act, paid:0, shared:true, adds:(cur.end-cur.start)-old};
+      } else { cur={start:t.a,maxEnd:t.b,end:t.a+Math.max(15,Math.ceil(act/15)*15)}; paid+=cur.end-cur.start; info[t.i]={act,paid:cur.end-cur.start}; }
+    });
+  });
+  return {info, actual, paid, perDate};
+}
+function dayCalc(day, tc){
+  const p=S.p, segs=segments(day), flags=[];
+  const tasks=(tc.perDate[day.date]||{actual:0,list:[]});
+  let worked=segs.reduce((a,s)=>a+s[1]-s[0],0) + tasks.actual;
+  // meal: a gap of 30+ min that starts before 5 hours of work
+  let mealOk=false, shortLunch=false, cum=0;
+  for(let i=0;i<segs.length;i++){
+    cum+=segs[i][1]-segs[i][0];
+    if(i<segs.length-1){ const gap=segs[i+1][0]-segs[i][1]; if(gap>=30 && cum<=300) mealOk=true; }
+  }
+  if(day.work&&day.work.lunch&&day.work.lunch.s&&day.work.lunch.e){ const l=toMin(day.work.lunch.e)-toMin(day.work.lunch.s); if(l>0&&l<30) shortLunch=true; }
+  let premium=0;
+  if(worked>360 && !mealOk){ flags.push(['bad','Over 6 hours with no 30-minute lunch starting by hour 5. The church owes 1 extra hour of pay for this day; Drew will add it.']); premium=1; }
+  else if(worked>300 && !mealOk && !p.waiver){ flags.push(['','Over 5 hours with no lunch. Take a 30-minute lunch on days like this, or ask Drew about the meal waiver.']); }
+  if(shortLunch) flags.push(['','Lunch was under 30 minutes.']);
+  const ot=Math.max(0,worked-480);
+  if(ot>0) flags.push(['','Overtime: '+fmtH(ot)+' over 8 hours.']);
+  if(segs.some(s=>s[1]>1440)) flags.push(['','Check your times: this ends after midnight.']);
+  if(p.minor){
+    if(day.school && worked>240) flags.push(['bad','Age limit: over 4 hours on a school day.']);
+    if(!day.school && worked>480) flags.push(['bad','Age limit: over 8 hours in a day.']);
+    const times=segs.map(s=>[s[0],s[1]]).concat(tasks.list.map(t=>[t.a,t.b]));
+    if(times.some(([a,b])=>a<300 || b>1320)) flags.push(['bad','Age limit: work before 5 a.m. or after 10 p.m.']);
+  }
+  if(day.work && day.leave) {} // part day off is fine
+  return {worked, flags, premium, ot, segs, changed: isChanged(day)};
+}
+function isChanged(day){
+  const u=usualFor(S.p,day.date), pre=S.p.preset[day.date];
+  if(pre) return !(day.leave && !day.work && day.leave.code===pre.leave.code && +day.leave.hours===+pre.leave.hours);
+  if(!u) return !!(day.work||day.leave);
+  const w=day.work; return !w || day.leave || w.start!==u.start || w.end!==u.end || !!w.lunch || (w.extra||[]).length>0;
+}
+function totals(){
+  const tc=taskCalc(); const per=S.days.map(d=>({d,c:dayCalc(d,tc)}));
+  const worked=per.reduce((a,x)=>a+x.c.worked,0);
+  const leave={}; S.days.forEach(d=>{ if(d.leave&&d.leave.code){ leave[d.leave.code]=(leave[d.leave.code]||0)+(+d.leave.hours||0)*60; }});
+  const dailyOT=per.reduce((a,x)=>a+x.c.ot,0);
+  // weekly overtime: over 40 straight-time hours in a Sun–Sat week
+  const wk={}; per.forEach(x=>{ const d=dObj(x.d.date); const s=new Date(d); s.setDate(d.getDate()-d.getDay()); const k=iso(s); wk[k]=(wk[k]||0)+Math.min(480,x.c.worked); });
+  const weeklyOT=Object.values(wk).reduce((a,m)=>a+Math.max(0,m-2400),0);
+  const premiums=per.reduce((a,x)=>a+x.c.premium,0);
+  const rounding=tc.paid-tc.actual;
+  const paidLeave=Object.entries(leave).filter(([k])=>k!=='UNP').reduce((a,[,v])=>a+v,0);
+  const recorded=worked+paidLeave+rounding;
+  const flagCount=per.reduce((a,x)=>a+x.c.flags.length,0);
+  const perDays=S.days.filter(d=>d.leave&&d.leave.code==='PER').length;
+  return {tc, per, worked, leave, dailyOT, weeklyOT, ot:dailyOT+weeklyOT, premiums, rounding, paidLeave, recorded, flagCount, perDays};
+}
+
+/* ---------- staff page ---------- */
+function render(){
+  const app=$('#app');
+  const p=S.p, T=totals();
+  const per=`${nice(p.start).slice(4)} – ${nice(p.end).slice(4)}`;
+  let h=`<header class="brand"><div class="in">
+    <div class="wordmark">COOL COMMUNITY<small>— CHURCH —</small></div>
+    <div class="hello">Hi ${esc(p.first)}</div>
+    <div class="sub">Your time card for <b>${per}</b>. Please send it by ${esc(p.due)}.</div>
+    <span class="chip ${S.sent?'sent':''}">${S.sent? '✓ Sent to Drew '+S.sent.at : (S.correction?'Correcting: not sent yet':'Not sent yet')}</span>
+  </div></header><div class="wrap">`;
+  if(S.sent){ h+=renderDone(T); $('#app').innerHTML=h+'</div>'; return; }
+  h+=`<div class="banner">${S.correction?'<b>Sending a correction.</b> Change what was wrong and send again. Drew will see both versions.':'<b>Your usual week is already filled in.</b> Only change the days that were different, then press Send at the bottom.'}</div>`;
+
+  // days
+  h+=`<section class="card"><h2>1. Your days</h2><p class="lead">Tap a day to change it.</p>`;
+  let lastWeek='';
+  T.per.forEach(({d,c},i)=>{
+    const dt=dObj(d.date), ws=new Date(dt); ws.setDate(dt.getDate()-dt.getDay());
+    const wkey=iso(ws); if(wkey!==lastWeek){ lastWeek=wkey; h+=`<div class="week">Week of ${MON[ws.getMonth()]} ${ws.getDate()}</div>`; }
+    let main, meta='';
+    if(d.work){ main=`${fmtT(d.work.start)} – ${fmtT(d.work.end)}`;
+      const bits=[fmtH(c.worked)]; if(d.work.lunch) bits.push('lunch '+fmtT(d.work.lunch.s)+'–'+fmtT(d.work.lunch.e));
+      if((d.work.extra||[]).length) bits.push('+ '+d.work.extra.length+' more time');
+      if((T.tc.perDate[d.date]||{}).actual) bits.push('incl. short tasks');
+      meta=bits.join(' · '); }
+    else if(d.leave){ main=CODE_NAME[d.leave.code]||'Time off'; meta=fmtH((+d.leave.hours||0)*60)+(d.note?' · '+esc(d.note):''); }
+    else { main='Off'; const ta=(T.tc.perDate[d.date]||{}).actual; if(ta) meta='Short tasks: '+fmtH(ta); }
+    const tags=(d.leave?`<span class="tag leave">${d.leave.code}${d.work?' '+fmtH(d.leave.hours*60):''}</span>`:'')+(c.changed&&!S.p.preset[d.date]?'<span class="tag chg">Changed</span>':'');
+    const off=!d.work&&!d.leave;
+    h+=`<div class="day ${off?'off':''}"><button class="dayrow" data-open="${i}" aria-expanded="${S.open===i}">
+      <div class="date"><div class="dow">${DOW[dt.getDay()]}</div><div class="dn">${MON[dt.getMonth()]} ${dt.getDate()}</div></div>
+      <div class="what"><div class="main">${main}${tags}</div>${meta?`<div class="meta">${meta}</div>`:''}</div>
+      ${c.flags.length?'<span class="dot" title="Something to check"></span>':''}
+      <span class="edit">${S.open===i?'Close':(off?'Add':'Change')}</span></button>`;
+    if(S.open===i) h+=renderEditor(d,i);
+    if(c.flags.length) h+=`<div class="flags">${c.flags.map(f=>`<div class="flag ${f[0]}">${esc(f[1])}</div>`).join('')}</div>`;
+    h+=`</div>`;
+  });
+  h+=`</section>`;
+
+  // totals
+  h+=`<section class="card"><h2>2. Check your totals</h2><div class="cardpad"><table class="tot">
+    <tr><td>Hours worked</td><td>${fmtH(T.worked)}</td></tr>`;
+  Object.entries(T.leave).forEach(([k,v])=>{ h+=`<tr><td>${CODE_NAME[k]} (${k})</td><td>${fmtH(v)}</td></tr>`; });
+  if(T.rounding) h+=`<tr><td>Short tasks: extra from rounding up to 15 minutes</td><td>${fmtH(T.rounding)}</td></tr>`;
+  h+=`<tr class="sum"><td>Total ${p.pay==='steady'?'recorded':'paid'} hours</td><td>${fmtH(T.recorded)}</td></tr></table>`;
+  if(T.ot) h+=`<div class="flag" style="margin-top:10px">Includes ${fmtH(T.ot)} of overtime, paid at time and a half.</div>`;
+  if(T.premiums) h+=`<div class="flag bad" style="margin-top:10px">${T.premiums} day${T.premiums>1?'s':''} owed an extra hour of pay for a missed lunch.</div>`;
+  if(p.pay==='steady'){
+    const sched=p.schedPerPeriod*60, extra=T.recorded-sched;
+    h+=`<div class="paybox"><b>Your paycheck stays steady.</b> It covers your ${fmtH(sched)} of scheduled time. `+
+      (extra>1? `You recorded <b>${fmtH(extra)} more</b>, which is paid on top.` :
+       extra<-1? `This period shows ${fmtH(-extra)} under. That's normal when a period has fewer of your usual days; Drew will check it.` :
+       `You recorded about the same.`)+`</div>`;
+  } else h+=`<div class="paybox"><b>You're paid for every hour</b> on this card, including short tasks.</div>`;
+  const vacUsed=(T.leave.VAC||0)/60, sickUsed=(T.leave.SICK||0)/60;
+  h+=`<div class="bal">`;
+  if(p.bal.VAC!=null) h+=`<div><b>${p.bal.VAC-vacUsed} hrs</b><span>vacation left after this</span></div>`;
+  if(p.bal.PER!=null) h+=`<div><b>${p.bal.PER-T.perDays} of 4</b><span>personal days left</span></div>`;
+  if(p.bal.SICK!=null) h+=`<div><b>${p.bal.SICK-sickUsed} hrs</b><span>sick time left</span></div>`;
+  h+=`</div>`;
+  if(p.bal.VAC!=null && vacUsed>p.bal.VAC) h+=`<div class="flag bad" style="margin-top:10px">That's more vacation than you have left. Drew will talk with you.</div>`;
+  h+=`</div></section>`;
+
+  // send
+  h+=`<section class="card"><h2>3. Send it</h2><div class="cardpad">
+    ${T.flagCount?`<p class="hint" style="margin-top:0">${T.flagCount} note${T.flagCount>1?'s':''} above will go to Drew with your card. You can still send it.</p>`:''}
+    <label class="f">Anything Drew should know? (optional)<textarea rows="2" data-msg>${esc(S.msg)}</textarea></label>
+    <label class="confirm"><input type="checkbox" data-confirm ${S.confirm?'checked':''}><span>My hours are correct and complete, and I got my rest breaks.</span></label>
+        <button class="btn big" data-act="send" ${S.confirm&&!S.sending?'':'disabled'}>${S.sending?'Sending…':(S.correction?'Send correction':'Send my time card')}</button>
+    <p class="hint" style="text-align:center">It goes to Drew. You'll get a copy by email.</p></div></section></div>`;
+  app.innerHTML=h;
+}
+function renderEditor(d,i){
+  const mode=d.work?'work':d.leave?'leave':'off';
+  let h=`<div class="editor"><div class="seg" role="group" aria-label="What happened this day">
+    <button data-mode="work" class="${mode==='work'?'on':''}">Worked</button>
+    <button data-mode="leave" class="${mode==='leave'?'on':''}">Time off</button>
+    <button data-mode="off" class="${mode==='off'?'on':''}">Didn't work</button></div>`;
+  if(d.work){ const w=d.work;
+    h+=`<div class="row2"><label class="f">Started<input type="time" step="300" data-w="start" value="${w.start||''}"></label>
+      <label class="f">Finished<input type="time" step="300" data-w="end" value="${w.end||''}"></label></div>
+      <label class="switch"><span><b>I took a lunch break</b><br><span class="hint" style="margin:0">Leave off if you didn't stop to eat.</span></span><input type="checkbox" data-lunch ${w.lunch?'checked':''}></label>`;
+    if(w.lunch) h+=`<div class="row2"><label class="f">Lunch from<input type="time" step="300" data-l="s" value="${w.lunch.s||''}"></label><label class="f">Lunch to<input type="time" step="300" data-l="e" value="${w.lunch.e||''}"></label></div>`;
+    (w.extra||[]).forEach((x,j)=>{ h+=`<div class="extra"><label class="f">Came back at<input type="time" step="300" data-x="${j}:s" value="${x.s||''}"></label><label class="f">Until<input type="time" step="300" data-x="${j}:e" value="${x.e||''}"></label><button class="x" data-delx="${j}" aria-label="Remove">×</button></div>`; });
+    h+=`<button class="link" data-act="addx">+ Worked again later that day</button>`;
+    if(!d.leave) h+=`<br><button class="link" data-act="partleave">+ Took time off for part of the day</button>`;
+  }
+  if(d.leave){
+    h+=`${d.work?'<div class="hint" style="margin-top:14px"><b>Time off for part of the day</b></div>':''}<div class="codes">${CODES.map(c=>`<button class="code ${d.leave.code===c[0]?'on':''}" data-code="${c[0]}"><b>${c[1]} <small>${c[0]}</small></b><span>${c[2]}</span></button>`).join('')}</div>
+      <div class="row2"><label class="f">Hours off<input type="number" min="0" max="12" step="0.25" inputmode="decimal" data-lh value="${d.leave.hours}"></label><div></div></div>
+      ${d.work?'<button class="link" data-act="dropleave">Remove time off</button>':''}`;
+  }
+  if(S.p.minor) h+=`<label class="switch"><span><b>School day</b><br><span class="hint" style="margin:0">Untick for holidays and days off school.</span></span><input type="checkbox" data-school ${d.school?'checked':''}></label>`;
+  h+=`<div class="btns"><button class="link" data-act="reset">Back to my usual</button><button class="btn" data-act="close">Done</button></div></div>`;
+  return h;
+}
+function renderDone(T){
+  const s=S.sent;
+  return `<section class="card done"><div class="check">✓</div><h2>Sent. Thank you!</h2>
+    <p>Drew has your time card for ${esc(s.period)}${s.version>1?' (correction)':''}. A copy is on its way to your email.</p>
+    <table class="tot" style="text-align:left;margin-top:10px"><tr><td>Hours worked</td><td>${fmtH(T.worked)}</td></tr>
+    ${Object.entries(T.leave).map(([k,v])=>`<tr><td>${CODE_NAME[k]}</td><td>${fmtH(v)}</td></tr>`).join('')}
+    <tr class="sum"><td>Total</td><td>${fmtH(T.recorded)}</td></tr></table>
+    <p class="hint">Need to fix something before Drew approves it?</p>
+    <button class="btn ghost" data-act="correct">Send a correction</button></section>
+    <details class="card" style="text-align:left;margin-top:16px"><summary style="padding:14px 16px;cursor:pointer;font-weight:800;color:var(--navy)">Preview only: the email Drew would get</summary><div class="cardpad" style="overflow-x:auto">${S.lastEmail?S.lastEmail.html:''}</div></details>`;
+}
+
+/* ---------- the email to Drew ---------- */
+function buildEmail(){
+  const T=totals(), p=S.p, period=`${nice(p.start).slice(4)} – ${nice(p.end).slice(4)}`, version=(S.version||0)+1;
+  const flags=T.per.flatMap(x=>x.c.flags.map(f=>nice(x.d.date)+': '+f[1]));
+  const leaveTxt=Object.entries(T.leave).map(([k,v])=>`${k} ${dec(v)}`).join(', ')||'none';
+  const td='style="padding:6px 8px;border-bottom:1px solid #D9E1E8;text-align:left;vertical-align:top"';
+  let h=`<div style="font-family:Arial,sans-serif;font-size:14px;color:#1d2433">
+  <p style="background:#FFF6DB;padding:6px 10px"><b>PREVIEW:</b> made-up person.</p>
+  <p><b>${esc(p.name)}</b> sent a time card for <b>${period}</b>${version>1?' (correction, version '+version+')':''}.</p>
+  <table style="border-collapse:collapse"><tr style="background:#202D50;color:#fff"><th ${td}>Day</th><th ${td}>What</th><th ${td}>Hours</th></tr>`;
+  const lines=[];
+  T.per.forEach(({d,c})=>{ if(!d.work&&!d.leave&&!c.worked) return;
+    const what=[d.work?fmtT(d.work.start)+'–'+fmtT(d.work.end)+(d.work.lunch?' (lunch '+fmtT(d.work.lunch.s)+'–'+fmtT(d.work.lunch.e)+')':'')+(d.work.extra||[]).filter(x=>x.s&&x.e).map(x=>', '+fmtT(x.s)+'–'+fmtT(x.e)).join(''):'', d.leave?d.leave.code+' '+d.leave.hours+' h':'', (!d.work&&c.worked)?'short tasks':''].filter(Boolean).join(' · ');
+    h+=`<tr><td ${td}>${nice(d.date)}</td><td ${td}>${esc(what)}</td><td ${td}>${dec(c.worked)}</td></tr>`;
+    lines.push(`${nice(d.date)}: ${what} (${dec(c.worked)} h)`); });
+  const sum=`Worked ${dec(T.worked)} · Leave ${leaveTxt} · Short-task rounding ${dec(T.rounding)} · Overtime ${dec(T.ot)} · Meal premiums ${T.premiums} · Total ${dec(T.recorded)}${p.pay==='steady'?' (scheduled '+p.schedPerPeriod+')':''}`;
+  h+=`</table><p>${esc(sum)}</p>`;
+  const tasks=S.tasks.map((t,i)=>`${nice(t.date)} ${fmtT(t.s)}–${fmtT(t.e)}, ${t.what||'short task'} (${(T.tc.info[i]||{}).act} min)`);
+  if(tasks.length) h+=`<p><b>Short tasks:</b> ${esc(tasks.join('; '))}</p>`;
+  h+= flags.length? `<p><b>To check:</b></p><ul>${flags.map(f=>`<li>${esc(f)}</li>`).join('')}</ul>` : `<p>No flags.</p>`;
+  if(S.msg) h+=`<p><b>Note from ${esc(p.first)}:</b> ${esc(S.msg)}</p>`;
+  h+=`<p style="color:#5d6b7c">Confirmed by ${esc(p.first)}: "My hours are correct and complete, and I got my rest breaks."</p></div>`;
+  const text=[`${p.name} sent a time card for ${period}${version>1?' (correction '+version+')':''}.`,'',...lines,'',sum,
+    tasks.length?'Short tasks: '+tasks.join('; '):'', flags.length?'To check:\n- '+flags.join('\n- '):'No flags.', S.msg?'Note: '+S.msg:''].filter(x=>x!=='').join('\n');
+  return {subject:`[PREVIEW] Time card: ${p.name}, ${period}${flags.length?' ('+flags.length+' to check)':''}${version>1?' · CORRECTION':''}`, html:h, text, period, version};
+}
+function sendCard(){
+  const m=buildEmail();
+  const now=new Date();
+  S.lastEmail=m;
+  S.sent={at:MON[now.getMonth()]+' '+now.getDate()+', '+fmtT(now.getHours()*60+now.getMinutes()), period:m.period, msg:S.msg, version:m.version};
+  S.version=m.version; S.open=null; S.correction=false; render(); window.scrollTo(0,0);
+}
+
+/* ---------- events ---------- */
+function day(i){ return S.days[i]; }
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button,[data-open]'); if(!t) return;
+  if(t.dataset.open!=null){ const i=+t.dataset.open; S.open=S.open===i?null:i; render(); return; }
+  const d=S.open!=null?day(S.open):null;
+  if(t.dataset.mode&&d){ const m=t.dataset.mode; const u=usualFor(S.p,d.date);
+    if(m==='work'){ d.work=d.work||u||{start:'09:00',end:'12:00',lunch:null,extra:[]}; d.leave=null; }
+    if(m==='leave'){ d.work=null; d.leave=d.leave||{code:'VAC',hours:(usualMin(S.p,d.date)/60)||4}; }
+    if(m==='off'){ d.work=null; d.leave=null; }
+    render(); return; }
+  if(t.dataset.code&&d){ d.leave.code=t.dataset.code; render(); return; }
+  if(t.dataset.delx!=null&&d){ d.work.extra.splice(+t.dataset.delx,1); render(); return; }
+  if(t.dataset.deltask!=null){ S.tasks.splice(+t.dataset.deltask,1); render(); return; }
+  const a=t.dataset.act;
+  if(a==='close'){ S.open=null; render(); }
+  if(a==='reset'&&d){ const u=usualFor(S.p,d.date), pre=S.p.preset[d.date]; d.work=pre?null:u; d.leave=pre?{...pre.leave}:null; render(); }
+  if(a==='addx'&&d){ d.work.extra.push({s:'',e:''}); render(); }
+  if(a==='partleave'&&d){ d.leave={code:'SICK',hours:1}; render(); }
+  if(a==='dropleave'&&d){ d.leave=null; render(); }
+  if(a==='addtask'){ S.adding=true; render(); }
+  if(a==='canceltask'){ S.adding=false; S.draft={date:S.p.start,s:'',e:'',what:''}; render(); }
+  if(a==='savetask'){ S.tasks.push({...S.draft}); S.adding=false; S.draft={date:S.draft.date,s:'',e:'',what:''}; render(); }
+  if(a==='taskaswork'){ const i=S.days.findIndex(x=>x.date===S.draft.date), dd=S.days[i];
+    if(dd.work) dd.work.extra.push({s:S.draft.s,e:S.draft.e}); else { dd.work={start:S.draft.s,end:S.draft.e,lunch:null,extra:[]}; }
+    S.adding=false; S.open=i; S.draft={date:S.p.start,s:'',e:'',what:''}; render(); toast('Added to '+nice(dd.date)+' as work time.'); }
+  if(a==='send'&&!S.sending) sendCard();
+  if(a==='correct'){ S.sent=null; S.correction=true; S.confirm=false; S.mailErr=null; render(); window.scrollTo(0,0); }
+});
+document.addEventListener('change',e=>{
+  const el=e.target, d=S.open!=null?day(S.open):null;
+  if(el.id==='who'){ const v=S.view; init(el.value); S.view=v; render(); return; }
+  if(el.dataset.w&&d){ d.work[el.dataset.w]=el.value; }
+  else if(el.dataset.l&&d){ d.work.lunch[el.dataset.l]=el.value; }
+  else if(el.dataset.x&&d){ const [j,k]=el.dataset.x.split(':'); d.work.extra[+j][k]=el.value; }
+  else if(el.hasAttribute('data-lunch')&&d){ if(el.checked){ const s=toMin(d.work.start)||540; d.work.lunch={s:fmt24(s+180),e:fmt24(s+210)}; } else d.work.lunch=null; }
+  else if(el.hasAttribute('data-lh')&&d){ d.leave.hours=Math.max(0,+el.value||0); }
+  else if(el.hasAttribute('data-school')&&d){ d.school=el.checked; }
+  else if(el.dataset.draft){ S.draft[el.dataset.draft]=el.value; }
+  else if(el.hasAttribute('data-confirm')){ S.confirm=el.checked; }
+  else return;
+  render();
+});
+document.addEventListener('input',e=>{ if(e.target.hasAttribute('data-msg')) S.msg=e.target.value; if(e.target.dataset.draft==='what') S.draft.what=e.target.value; });
+function fmt24(m){ m=((m%1440)+1440)%1440; return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
+init('jordan'); render();
+</script>
+
+
+</body>
+</html>
