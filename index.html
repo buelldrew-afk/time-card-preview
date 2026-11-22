@@ -75,6 +75,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid #
 .code b{display:block;color:var(--navy)}
 .code span{font-size:12.5px;color:var(--muted)}
 .code.on{border:2px solid var(--slate);background:#f1f6fa;padding:9px}
+.codes .code:last-child:nth-child(odd){grid-column:1/-1}
 .hint{font-size:13.5px;color:var(--muted);margin-top:8px}
 .extra{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-top:8px}
 .x{border:1px solid var(--line);background:#fff;border-radius:10px;height:46px;width:46px;cursor:pointer;font-size:20px;color:var(--muted)}
@@ -142,7 +143,15 @@ const CODES = [
   ['PER','Personal day','Uses one of your 4 days'],
   ['SICK','Sick','You or family member ill'],
   ['CXL','Church cancelled','Closed or called off; paid, uses nothing'],
-  ['UNP','Unpaid','Time off without pay']
+  ['UNP','Unpaid','Time off without pay'],
+  ['LAW','Required by law','Voting, jury duty, bereavement']
+];
+/* leave the law requires: [reason, hint shown to staff, paid?] */
+const LAW_REASONS = [
+  ['Voting','Up to 2 hours are paid when you can\'t vote outside work hours. Please tell Drew 2 working days ahead.',true],
+  ['Jury duty or witness','Your job is protected. Drew will confirm whether these hours are paid.',false],
+  ['Bereavement','Up to 5 days. Drew will confirm whether these hours are paid, or you can use vacation or sick time instead.',false],
+  ['Other','Say what it was in the note to Drew at the bottom.',false]
 ];
 const CODE_NAME = Object.fromEntries(CODES.map(c=>[c[0],c[1]]));
 
@@ -224,7 +233,10 @@ function dayCalc(day, tc){
   const ot=Math.max(0,worked-480);
   if(ot>0) flags.push(['','Overtime: '+fmtH(ot)+' over 8 hours.']);
   if(segs.some(s=>s[1]>1440)) flags.push(['','Check your times: this ends after midnight.']);
-  if(day.work && day.leave) {} // part day off is fine
+  if(day.leave && day.leave.code==='LAW'){
+    if(!day.leave.reason) flags.push(['bad','Choose what the leave required by law was for.']);
+    else if(day.leave.reason==='Voting' && +day.leave.hours>2) flags.push(['','Voting: up to 2 hours are paid.']);
+  }
   return {worked, flags, premium, ot, segs, changed: isChanged(day)};
 }
 function isChanged(day){
@@ -243,11 +255,15 @@ function totals(){
   const weeklyOT=Object.values(wk).reduce((a,m)=>a+Math.max(0,m-2400),0);
   const premiums=per.reduce((a,x)=>a+x.c.premium,0);
   const rounding=tc.paid-tc.actual;
-  const paidLeave=Object.entries(leave).filter(([k])=>k!=='UNP').reduce((a,[,v])=>a+v,0);
+  // leave required by law: recorded by reason; only voting (up to 2 hours a day) counts as paid for now
+  const law={}; let lawPaid=0, lawPending=0;
+  S.days.forEach(d=>{ if(d.leave&&d.leave.code==='LAW'){ const r=d.leave.reason||'Reason not chosen', m=(+d.leave.hours||0)*60;
+    law[r]=(law[r]||0)+m; if(r==='Voting') lawPaid+=Math.min(m,120); else lawPending+=m; }});
+  const paidLeave=Object.entries(leave).filter(([k])=>k!=='UNP'&&k!=='LAW').reduce((a,[,v])=>a+v,0)+lawPaid;
   const recorded=worked+paidLeave+rounding;
   const flagCount=per.reduce((a,x)=>a+x.c.flags.length,0);
   const perDays=S.days.filter(d=>d.leave&&d.leave.code==='PER').length;
-  return {tc, per, worked, leave, dailyOT, weeklyOT, ot:dailyOT+weeklyOT, premiums, rounding, paidLeave, recorded, flagCount, perDays};
+  return {tc, per, worked, leave, law, lawPending, dailyOT, weeklyOT, ot:dailyOT+weeklyOT, premiums, rounding, paidLeave, recorded, flagCount, perDays};
 }
 
 /* ---------- staff page ---------- */
@@ -294,9 +310,11 @@ function render(){
   // totals
   h+=`<section class="card"><h2>2. Check your totals</h2><div class="cardpad"><table class="tot">
     <tr><td>Hours worked</td><td>${fmtH(T.worked)}</td></tr>`;
-  Object.entries(T.leave).forEach(([k,v])=>{ h+=`<tr><td>${CODE_NAME[k]} (${k})</td><td>${fmtH(v)}</td></tr>`; });
+  Object.entries(T.leave).forEach(([k,v])=>{ if(k==='LAW') return; h+=`<tr><td>${CODE_NAME[k]} (${k})</td><td>${fmtH(v)}</td></tr>`; });
+  Object.entries(T.law).forEach(([r,v])=>{ h+=`<tr><td>Required by law (LAW): ${esc(r)}</td><td>${fmtH(v)}</td></tr>`; });
   if(T.rounding) h+=`<tr><td>Short tasks: extra from rounding up to 15 minutes</td><td>${fmtH(T.rounding)}</td></tr>`;
   h+=`<tr class="sum"><td>Total ${p.pay==='steady'?'recorded':'paid'} hours</td><td>${fmtH(T.recorded)}</td></tr></table>`;
+  if(T.lawPending) h+=`<p class="hint">The total leaves out ${fmtH(T.lawPending)} of leave required by law until Drew confirms whether it's paid.</p>`;
   if(T.ot) h+=`<div class="flag" style="margin-top:10px">Includes ${fmtH(T.ot)} of overtime, paid at time and a half.</div>`;
   if(T.premiums) h+=`<div class="flag bad" style="margin-top:10px">${T.premiums} day${T.premiums>1?'s':''} owed an extra hour of pay for a missed lunch.</div>`;
   if(p.pay==='steady'){
@@ -341,6 +359,7 @@ function renderEditor(d,i){
   }
   if(d.leave){
     h+=`${d.work?'<div class="hint" style="margin-top:14px"><b>Time off for part of the day</b></div>':''}<div class="codes">${CODES.map(c=>`<button class="code ${d.leave.code===c[0]?'on':''}" data-code="${c[0]}"><b>${c[1]} <small>${c[0]}</small></b><span>${c[2]}</span></button>`).join('')}</div>
+      ${d.leave.code==='LAW'?`<label class="f" style="margin-top:12px" for="law-reason">What was it for?<select id="law-reason" data-reason><option value="" ${d.leave.reason?'':'selected'}>Choose…</option>${LAW_REASONS.map(r=>`<option ${d.leave.reason===r[0]?'selected':''}>${r[0]}</option>`).join('')}</select></label>${d.leave.reason?`<p class="hint">${esc((LAW_REASONS.find(r=>r[0]===d.leave.reason)||[,''])[1])}</p>`:''}`:''}
       <div class="row2"><label class="f">Hours off<input type="number" min="0" max="12" step="0.25" inputmode="decimal" data-lh value="${d.leave.hours}"></label><div></div></div>
       ${d.work?'<button class="link" data-act="dropleave">Remove time off</button>':''}`;
   }
@@ -371,7 +390,7 @@ function buildEmail(){
   <table style="border-collapse:collapse"><tr style="background:#202D50;color:#fff"><th ${td}>Day</th><th ${td}>What</th><th ${td}>Hours</th></tr>`;
   const lines=[];
   T.per.forEach(({d,c})=>{ if(!d.work&&!d.leave&&!c.worked) return;
-    const what=[d.work?fmtT(d.work.start)+'–'+fmtT(d.work.end)+(d.work.lunch?' (lunch '+fmtT(d.work.lunch.s)+'–'+fmtT(d.work.lunch.e)+')':'')+(d.work.extra||[]).filter(x=>x.s&&x.e).map(x=>', '+fmtT(x.s)+'–'+fmtT(x.e)).join(''):'', d.leave?d.leave.code+' '+d.leave.hours+' h':'', (!d.work&&c.worked)?'short tasks':''].filter(Boolean).join(' · ');
+    const what=[d.work?fmtT(d.work.start)+'–'+fmtT(d.work.end)+(d.work.lunch?' (lunch '+fmtT(d.work.lunch.s)+'–'+fmtT(d.work.lunch.e)+')':'')+(d.work.extra||[]).filter(x=>x.s&&x.e).map(x=>', '+fmtT(x.s)+'–'+fmtT(x.e)).join(''):'', d.leave?d.leave.code+(d.leave.code==='LAW'?' ('+(d.leave.reason||'reason not chosen')+')':'')+' '+d.leave.hours+' h':'', (!d.work&&c.worked)?'short tasks':''].filter(Boolean).join(' · ');
     h+=`<tr><td ${td}>${nice(d.date)}</td><td ${td}>${esc(what)}</td><td ${td}>${dec(c.worked)}</td></tr>`;
     lines.push(`${nice(d.date)}: ${what} (${dec(c.worked)} h)`); });
   const sum=`Worked ${dec(T.worked)} · Leave ${leaveTxt} · Short-task rounding ${dec(T.rounding)} · Overtime ${dec(T.ot)} · Meal premiums ${T.premiums} · Total ${dec(T.recorded)}${p.pay==='steady'?' (scheduled '+p.schedPerPeriod+')':''}`;
@@ -430,6 +449,7 @@ document.addEventListener('change',e=>{
   else if(el.dataset.x&&d){ const [j,k]=el.dataset.x.split(':'); d.work.extra[+j][k]=el.value; }
   else if(el.hasAttribute('data-lunch')&&d){ if(el.checked){ const s=toMin(d.work.start)||540; d.work.lunch={s:fmt24(s+180),e:fmt24(s+210)}; } else d.work.lunch=null; }
   else if(el.hasAttribute('data-lh')&&d){ d.leave.hours=Math.max(0,+el.value||0); }
+  else if(el.hasAttribute('data-reason')&&d){ d.leave.reason=el.value; }
   else if(el.hasAttribute('data-school')&&d){ d.school=el.checked; }
   else if(el.dataset.draft){ S.draft[el.dataset.draft]=el.value; }
   else if(el.hasAttribute('data-confirm')){ S.confirm=el.checked; }
