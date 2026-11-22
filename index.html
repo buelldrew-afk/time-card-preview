@@ -149,8 +149,8 @@ const CODES = [
 /* leave the law requires: [reason, hint shown to staff, paid?] */
 const LAW_REASONS = [
   ['Voting','Up to 2 hours are paid when you can\'t vote outside work hours. Please tell Drew 2 working days ahead.',true],
-  ['Jury duty or witness','Your job is protected. Drew will confirm whether these hours are paid.',false],
-  ['Bereavement','Up to 5 days. Drew will confirm whether these hours are paid, or you can use vacation or sick time instead.',false],
+  ['Jury duty or witness','Paid, and your job is protected.',true],
+  ['Bereavement','Up to 5 days, paid.',true],
   ['Other','Say what it was in the note to Drew at the bottom.',false]
 ];
 const CODE_NAME = Object.fromEntries(CODES.map(c=>[c[0],c[1]]));
@@ -236,6 +236,7 @@ function dayCalc(day, tc){
   if(day.leave && day.leave.code==='LAW'){
     if(!day.leave.reason) flags.push(['bad','Choose what the leave required by law was for.']);
     else if(day.leave.reason==='Voting' && +day.leave.hours>2) flags.push(['','Voting: up to 2 hours are paid.']);
+    else if(day.leave.reason==='Bereavement' && S.days.filter(x=>x.leave&&x.leave.code==='LAW'&&x.leave.reason==='Bereavement').length>5) flags.push(['','Bereavement: more than 5 days. Drew will check.']);
   }
   return {worked, flags, premium, ot, segs, changed: isChanged(day)};
 }
@@ -255,10 +256,13 @@ function totals(){
   const weeklyOT=Object.values(wk).reduce((a,m)=>a+Math.max(0,m-2400),0);
   const premiums=per.reduce((a,x)=>a+x.c.premium,0);
   const rounding=tc.paid-tc.actual;
-  // leave required by law: recorded by reason; only voting (up to 2 hours a day) counts as paid for now
+  // leave required by law: voting paid up to 2 hours a day; jury duty and bereavement paid (Drew, 2026-11-22); "Other" waits for Drew
   const law={}; let lawPaid=0, lawPending=0;
   S.days.forEach(d=>{ if(d.leave&&d.leave.code==='LAW'){ const r=d.leave.reason||'Reason not chosen', m=(+d.leave.hours||0)*60;
-    law[r]=(law[r]||0)+m; if(r==='Voting') lawPaid+=Math.min(m,120); else lawPending+=m; }});
+    law[r]=(law[r]||0)+m;
+    if(r==='Voting') lawPaid+=Math.min(m,120);
+    else if(r==='Jury duty or witness'||r==='Bereavement') lawPaid+=m;
+    else lawPending+=m; }});
   const paidLeave=Object.entries(leave).filter(([k])=>k!=='UNP'&&k!=='LAW').reduce((a,[,v])=>a+v,0)+lawPaid;
   const recorded=worked+paidLeave+rounding;
   const flagCount=per.reduce((a,x)=>a+x.c.flags.length,0);
@@ -314,7 +318,7 @@ function render(){
   Object.entries(T.law).forEach(([r,v])=>{ h+=`<tr><td>Required by law (LAW): ${esc(r)}</td><td>${fmtH(v)}</td></tr>`; });
   if(T.rounding) h+=`<tr><td>Short tasks: extra from rounding up to 15 minutes</td><td>${fmtH(T.rounding)}</td></tr>`;
   h+=`<tr class="sum"><td>Total ${p.pay==='steady'?'recorded':'paid'} hours</td><td>${fmtH(T.recorded)}</td></tr></table>`;
-  if(T.lawPending) h+=`<p class="hint">The total leaves out ${fmtH(T.lawPending)} of leave required by law until Drew confirms whether it's paid.</p>`;
+  if(T.lawPending) h+=`<p class="hint">The total leaves out ${fmtH(T.lawPending)} of "Other" leave required by law until Drew confirms whether it's paid.</p>`;
   if(T.ot) h+=`<div class="flag" style="margin-top:10px">Includes ${fmtH(T.ot)} of overtime, paid at time and a half.</div>`;
   if(T.premiums) h+=`<div class="flag bad" style="margin-top:10px">${T.premiums} day${T.premiums>1?'s':''} owed an extra hour of pay for a missed lunch.</div>`;
   if(p.pay==='steady'){
